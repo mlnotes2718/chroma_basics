@@ -25,4 +25,4 @@ conda env create -f environment.yml
 Attached the environment to the notebook and runs each cell.
 
 ## OpenAI API
-OpenAI API is required to run the code 
+OpenAI API is required to run the code with openai embedding. Please change to other embeddings if you do not have OpenAI API token.
