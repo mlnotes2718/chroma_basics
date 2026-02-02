@@ -13,3 +13,8 @@ wheels/
 
 # Mac OS
 .DS_store
+
+# Data
+data/
+*.sqlite3
+*.db

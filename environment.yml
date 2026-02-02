@@ -1,0 +1,15 @@
+name: chromadb
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - ipykernel=7.1.0
+  - ipywidgets=8.1.7
+  - openai=2.14.0
+  - pip=26.0
+  - python=3.11.14
+  - pip:
+      - chromadb==1.4.1
+      - sentence-transformers==5.2.2
+      - transformers==5.0.0
+prefix: /Users/ds0/miniconda3/envs/chromadb
