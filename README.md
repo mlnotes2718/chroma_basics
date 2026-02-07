@@ -24,5 +24,12 @@ conda env create -f environment.yml
 ## Running the Notebook
 Attached the environment to the notebook and runs each cell.
 
+## Hugging Face API Token
+You will need hugging face API token to download the deault embedding. Please create a dotenv file with the follow: 
+
+```text
+HF_TOKEN='hf_xxxx'
+```
+
 ## OpenAI API
 OpenAI API is required to run the code with openai embedding. Please change to other embeddings if you do not have OpenAI API token.
