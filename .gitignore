@@ -1,0 +1,27 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.venv/
+.env
+
+# Mac OS
+.DS_store
+
+# Data
+data/
+*.sqlite3
+*.db
+
+# Logs
+logs/
+*.log
+
+gitleaks_report.csv
+trivy_report.txt
