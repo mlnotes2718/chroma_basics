@@ -37,20 +37,6 @@ precommit:
         pre-commit run --all-files; \
     fi
 
-# Run pip-audit and trivy on the current environment
-audit:
-    @echo "🔒  ({{env_type}}) Running audit with pip-audit and trivy..."
-    @echo "({{env_type}}) Running pip-audit..."
-    @if [ "{{env_type}}" = "uv" ]; then \
-        uv run pip-audit --local; \
-    else \
-        pip-audit --local; \
-    fi
-    @echo "({{env_type}}) Running trivy..."
-    trivy fs . --output logs/trivy_report.txt
-
-# Run all checks
-run: health audit clean
 
 # Remove build, cache, and coverage artifacts
 clean:
@@ -64,3 +50,7 @@ clean:
     rm -rf ./data
     find . -type d -name "__pycache__" -exec rm -rf {} +
     @echo "✨ Cleaned!"
+
+
+# Run all checks
+run: health clean

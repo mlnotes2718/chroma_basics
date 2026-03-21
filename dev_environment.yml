@@ -1,4 +1,4 @@
-name: dev-chromadb
+name: chromadb-dev
 channels:
   - conda-forge
   - defaults
@@ -15,4 +15,3 @@ dependencies:
       - chromadb==1.4.1
       - sentence-transformers==5.2.2
       - transformers==5.0.0
-prefix: /Users/dsai/miniconda3/envs/dev-chromadb
