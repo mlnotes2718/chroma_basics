@@ -51,21 +51,42 @@ This is fundamentally different from training parameters — the model is frozen
 
 ## 3. Vector Databases & RAG Systems
 
+### RAG Flow
+
+A typical RAG pipeline works in two phases:
+
+**Indexing (offline):**
+1. Load documents and split them into chunks
+2. Pass each chunk through an embedding model to produce a vector
+3. Store the vectors (with the original text) in a vector database
+
+**Retrieval & Generation (at query time):**
+1. Embed the user's query using the same embedding model
+2. Search the vector database for the most similar chunks (via cosine similarity or euclidean distance)
+3. Pass the retrieved chunks + the original question to an LLM
+4. The LLM generates an answer grounded in the retrieved context
+
 ### What a Vector Database Stores
 
-A vector database can store **any kind of vector embedding** — text embeddings, sentence embeddings, document embeddings, image embeddings, audio embeddings, etc. The type of data is not the defining characteristic.
-
-What *is* always true is that **everything stored in a vector database is an inference-time output** — a vector produced by passing data through a trained model. Training parameters (model weights) are never stored in a vector database; they live inside the model files themselves.
+A vector database can store **any kind of vector embedding** — text, sentence, document, image, audio, etc. What is always true is that **everything stored is an inference-time output** — a vector produced by a trained model. Training parameters (model weights) are never stored in a vector database.
 
 ### Chunking
 
-- **Chunking** is the standard approach in RAG systems — splitting documents into smaller pieces before generating embeddings
-- Preferred over sentence-level embeddings because chunks provide **contextual information across multiple sentences**
-- Document-level embeddings are less common, though some systems use them for an initial broad retrieval step before switching to chunk-level precision
+- **Chunking** is the standard approach — splitting documents into smaller pieces before embedding
+- The **chunking strategy and settings** (chunk size, overlap, splitting logic) matter more than which library you use; a poorly tuned chunker will hurt retrieval regardless of the tool
+- Chunks are preferred over sentence-level embeddings because they provide **richer contextual information** across multiple sentences
+- Document-level embeddings are less common, though some systems use them for a broad first-pass retrieval before switching to chunk-level precision
 
-### How Similarity Search Works in a Vector DB
+### Embedding Models
 
-Once embeddings are stored in a vector database, they are used for **semantic similarity search** — finding content that is semantically close to a query. This is done using distance/similarity metrics:
+- The choice of embedding model affects retrieval quality — different models have different strengths and token limits
+- **ChromaDB's default embedding model** (all-MiniLM-L6-v2) runs locally and is fast, but has a token limit (~256 tokens); chunks exceeding this will be silently truncated
+- **OpenAI's embedding models** (e.g., text-embedding-3-small) run remotely — good quality, but require an API call per chunk, which raises **latency, cost, and privacy concerns** (your data leaves your environment)
+- Beyond those tradeoffs, the quality difference between modern embedding models is modest for most tasks — the bigger wins usually come from chunking strategy and retrieval tuning
+
+### Similarity Search
+
+Once embeddings are stored, retrieval uses distance/similarity metrics to find semantically relevant chunks:
 
 | Metric | Description | Common Use |
 |---|---|---|
@@ -73,15 +94,13 @@ Once embeddings are stored in a vector database, they are used for **semantic si
 | **Dot Product** | Similar to cosine but considers magnitude | Used when magnitude carries meaning |
 | **Euclidean Distance (L2)** | Straight-line distance between two vectors | Less common for text |
 
-**Cosine similarity** dominates text use cases because:
-- It only cares about the *direction* of vectors, not their magnitude
-- Text embeddings are typically normalized, making cosine similarity very effective
-- It correlates well with semantic similarity in language
+In practice, **cosine similarity and euclidean distance produce similar rankings** for normalized text embeddings — the difference in retrieval quality is generally small. Cosine similarity is the default choice because text embeddings are typically normalized.
 
-The broader purpose of embeddings in a RAG system is:
-1. **Similarity search** — find chunks semantically close to the query
-2. **Retrieval** — return the most relevant chunks as context for the LLM
-3. **Ranking / filtering** — some systems do a broad initial retrieval then re-rank results
+### Choice of LLM
+
+- **Any LLM can serve as the generation component** in a RAG system
+- The LLM only receives a small, focused context window — the retrieved chunks plus the question — so it does not need to "know" the source documents
+- This means you can swap in different LLMs (local or hosted) without changing your retrieval pipeline, as long as the context fits within the model's context window
 
 ---
 
@@ -98,8 +117,11 @@ You do **not** need to share the vector database contents — those are inferenc
 ## Summary Notes
 
 - The word **"embedding"** has two meanings in NLP — don't confuse them:
-  1. **Embedding as parameter** — e.g., word2vec word vectors, BERT's token embedding layer weights. These are learned during training and stored inside the model.
-  2. **Embedding as output** — vectors produced at inference time and stored in a vector database. These are generated *by* the model, not *part of* the model.
-- **word2vec is a special case** where the training goal is specifically to learn word vectors, so the weights themselves are the embeddings. In contrast, BERT uses its token embedding layer only as a first internal step.
-- **Vector databases store all kinds of embeddings** (text, image, etc.), but they always store inference-time outputs — never training parameters.
-- **Cosine similarity** is the most common metric used in vector databases for text similarity search.
+  1. **Embedding as parameter** — e.g., word2vec word vectors, BERT's token embedding layer weights. Learned during training, stored inside the model.
+  2. **Embedding as output** — vectors produced at inference time and stored in a vector database. Generated *by* the model, not *part of* the model.
+- **word2vec is a special case** where the training goal is specifically to learn word vectors. BERT uses its token embedding layer only as a first internal step.
+- **Vector databases store inference-time outputs only** — never training parameters.
+- **Chunking strategy and settings** are more impactful than the choice of chunking library.
+- **Embedding model choice** involves a tradeoff between local (fast, private, token-limited) and remote (higher quality, but latency and privacy costs).
+- **Cosine similarity vs. euclidean distance** — both work; the practical difference in retrieval quality is small for normalized embeddings.
+- **Any LLM can be used** in a RAG system — it only sees the retrieved chunks and the question, not the full knowledge base.

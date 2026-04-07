@@ -1,0 +1,166 @@
+nbdiff notebooks/rag_demo.ipynb (HEAD) notebooks/rag_demo.ipynb
+--- notebooks/rag_demo.ipynb (HEAD)  (no timestamp)
++++ notebooks/rag_demo.ipynb  2026-04-08 15:38:04.373770
+[34m[1m## modified /cells/2/source:[0m
+[36m@@ -4,5 +4,6 @@[m [mfrom dotenv import load_dotenv[m
+ from pprint import pprint[m
+ [m
+ import chromadb[m
+[32m+[m[32mfrom chromadb.utils.embedding_functions import OpenAIEmbeddingFunction[m
+ from langchain_text_splitters import RecursiveCharacterTextSplitter[m
+[31m-import openai[m
+[32m+[m[32mimport openai[m
+[m
+
+[0m[34m[1m## inserted before /cells/4:[0m
+[32m+  code cell:
+[32m+    source:
+[32m+      # makdir in dir `data` not exist
+[32m+      data_dir = Path("data")
+[32m+      data_dir.mkdir(exist_ok=True)
+
+[0m[34m[1m## inserted before /cells/7:[0m
+[32m+  markdown cell:
+[32m+    source:
+[32m+      ## Chunking
+[32m+  markdown cell:
+[32m+    source:
+[32m+      - Langchain Recursive Character Text Splitter
+
+[0m[34m[1m## modified /cells/7/source:[0m
+[36m@@ -1,6 +1,6 @@[m
+ # Chunk the documents[m
+ text_splitter = RecursiveCharacterTextSplitter([m
+[31m-    chunk_size=500,  # Reduced from 1000 for more granular chunks[m
+[32m+[m[32m    chunk_size=500,  # Reduced from 1000 for more granular chunks, 1024 is the limit for chromadb embedding model[m
+     chunk_overlap=250,  # Increased from 200 for better continuity[m
+     length_function=len,[m
+     is_separator_regex=False,[m
+
+[0m[34m[1m## inserted before /cells/8:[0m
+[32m+  markdown cell:
+[32m+    source:
+[32m+      ## Embedding and Vectorize
+
+[0m[34m[1m## modified /cells/8/source:[0m
+[36m@@ -1,6 +1,8 @@[m
+[31m-# Create ChromaDB client and collection[m
+[31m-client = chromadb.EphemeralClient()[m
+[31m-collection = client.get_or_create_collection(name="rag_demo3")[m
+[32m+[m[32m# Create ChromaDB client and collection with persistent storage[m
+[32m+[m[32mpersist_dir = Path("data/chromadb_demo")[m
+[32m+[m[32mpersist_dir.mkdir(parents=True, exist_ok=True)[m
+[32m+[m[32mclient = chromadb.PersistentClient(path=str(persist_dir))[m
+[32m+[m[32mcollection = client.get_or_create_collection(name="rag_demo_1")[m
+ [m
+ # Add chunks to collection[m
+ texts = [chunk["text"] for chunk in chunks][m
+
+[0m[34m[1m## inserted before /cells/9:[0m
+[32m+  markdown cell:
+[32m+    source:
+[32m+      1049 chunks - 1min; processed locally
+[32m+  code cell:
+[32m+    source:
+[32m+      # See the first 5 vectors for the first 5 chunks and also print the chunks
+[32m+      vectors = collection.get(ids=[f"chunk_{i}" for i in range(5)], include=["embeddings"])["embeddings"]
+[32m+      for i, vector in enumerate(vectors):
+[32m+          print(f"Chunk {i+1} vector (first 5 dimensions): {vector[:5]}")
+[32m+          print(f"Chunk {i+1} text: {texts[i][:300]}...\n")
+[32m+  markdown cell:
+[32m+    source:
+[32m+      ## Setup LLM (Any LLM: We use OpenAI)
+
+[0m[34m[1m## modified /cells/11/source:[0m
+[36m@@ -13,9 +13,12 @@[m [mdef ask_question(question, n_results=5):  # Increased from 3[m
+         relevant_docs = results['documents'][0][m
+ [m
+         ## printing retrieved chunks for debugging[m
+[31m-        # print(f"Retrieved {len(relevant_docs)} chunks:")[m
+[31m-        # for i, doc in enumerate(relevant_docs):[m
+[31m-        #     print(f"Chunk {i+1}: {doc[:300]}...")[m
+[32m+[m[32m        print('\n---------------------------------')[m
+[32m+[m[32m        print("\nRetrieved chunks from ChromaDB:")[m
+[32m+[m[32m        print(f"Retrieved {len(relevant_docs)} chunks:")[m
+[32m+[m[32m        for i, doc in enumerate(relevant_docs):[m
+[32m+[m[32m            print(f"Chunk {i+1}: {doc[:300]}...")[m
+[32m+[m[32m        print('---------------------------------\n')[m
+ [m
+         context = "\n\n".join(relevant_docs)[m
+         [m
+
+[0m[34m[1m## modified /cells/14/source:[0m
+[31m-
+[32m+  # Testing Other Embedding model
+
+[0m[34m[1m## inserted before /cells/15:[0m
+[32m+  markdown cell:
+[32m+    source:
+[32m+      ## Embedding and Vectorize (Change to OpenAI Small Embedding)
+[32m+  code cell:
+[32m+    source:
+[32m+      # Create ChromaDB client and collection with persistent storage
+[32m+      persist_dir = Path("data/chromadb_openai")
+[32m+      persist_dir.mkdir(parents=True, exist_ok=True)
+[32m+      client = chromadb.PersistentClient(path=str(persist_dir))
+[32m+      embedding_function = OpenAIEmbeddingFunction(api_key=api_key, model_name="text-embedding-3-small")
+[32m+      collection = client.get_or_create_collection(name="rag_demo_openai", embedding_function=embedding_function, metadata={"hnsw:space": "cosine"})
+[32m+
+[32m+      # Add chunks to collection
+[32m+      texts = [chunk["text"] for chunk in chunks]
+[32m+      metadatas = [{"source": chunk["source"]} for chunk in chunks]
+[32m+      ids = [f"chunk_{i}" for i in range(len(chunks))]
+[32m+
+[32m+      collection.add(
+[32m+          documents=texts,
+[32m+          metadatas=metadatas,
+[32m+          ids=ids
+[32m+      )
+[32m+
+[32m+      print("Documents added to ChromaDB")
+[32m+  markdown cell:
+[32m+    source:
+[32m+      OpenAI `text-embedding-3-small` is done remotely. That is why so fast.
+[32m+  code cell:
+[32m+    source:
+[32m+      # See the first 5 vectors for the first 5 chunks and also print the chunks
+[32m+      vectors = collection.get(ids=[f"chunk_{i}" for i in range(5)], include=["embeddings"])["embeddings"]
+[32m+      for i, vector in enumerate(vectors):
+[32m+          print(f"Chunk {i+1} vector (first 5 dimensions): {vector[:5]}")
+[32m+          print(f"Chunk {i+1} text: {texts[i][:300]}...\n")
+[32m+  markdown cell:
+[32m+    source:
+[32m+      ## Setup LLM (Any LLM: We use OpenAI)
+[32m+  code cell:
+[32m+    source:
+[32m+      # Set up OpenAI client
+[32m+      api_key = os.getenv("OPENAI_API_KEY")
+[32m+      if api_key:
+[32m+          openai_client = openai.OpenAI(api_key=api_key)
+[32m+          print("OpenAI client initialized successfully")
+[32m+      else:
+[32m+          print("OPENAI_API_KEY not set. Please set it in the .env file to use the LLM features.")
+[32m+  markdown cell:
+[32m+    source:
+[32m+      We use the same question function.
+[32m+  code cell:
+[32m+    source:
+[32m+      # Test the RAG system
+[32m+
+[32m+      while True:
+[32m+          question = input("\nEnter your question (or type 'exit' to quit): ")
+[32m+
+[32m+          if question.lower() == "exit":
+[32m+              print("Goodbye!")
+[32m+              break
+[32m+
+[32m+          if not question.strip():
+[32m+              print("Please enter a valid question.")
+[32m+              continue
+[32m+
+[32m+          answer = ask_question(question)
+[32m+          print(f"\nQuestion: {question}")
+[32m+          print("Answer:")
+[32m+          pprint(answer)
+
+[0m

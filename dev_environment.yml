@@ -11,6 +11,7 @@ dependencies:
   - just=1.39.0
   - pre-commit=4.5.1
   - pip-audit=2.10.0
+  - langchain=1.2.7
   - pip:
       - chromadb==1.4.1
       - sentence-transformers==5.2.2
