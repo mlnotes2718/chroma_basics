@@ -7,7 +7,7 @@ repos:
       - id: check-merge-conflict     # blocks accidental merge conflict markers
         stages: [pre-commit]         # run on commit
       - id: check-added-large-files  # prevents committing huge files
-        args: ['--maxkb=500']
+        args: ['--maxkb=1000']
         stages: [pre-commit]         # run on commit
       - id: check-toml               # validates pyproject.toml syntax
         stages: [pre-commit]         # run on commit

@@ -32,10 +32,11 @@ Attached the environment to the notebook and runs each cell.
 - [Embedding](notebooks/embedding.ipynb)
 
 ### Hugging Face API Token
-You will need hugging face API token to download the deault embedding. Please create a dotenv file with the follow:
+You will need hugging face API token to download the default embedding. Please create a dotenv file with the follow:
 
 ```text
 HF_TOKEN='hf_xxxx'
+OPENAI_API_KEY='sk-xxx'
 ```
 
 ### OpenAI API
